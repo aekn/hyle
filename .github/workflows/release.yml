@@ -1,0 +1,113 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.9"
+          python-version: "3.14"
+          enable-cache: false
+
+      - name: tag
+        shell: bash
+        run: |
+          core=$(uv version --short --package hyle-core)
+          ollama=$(uv version --short --package hyle-ollama)
+
+          test "$core" = "$ollama" || {
+            echo "package versions differ: hyle-core=$core hyle-ollama=$ollama"
+            exit 1
+          }
+
+          test "$GITHUB_REF_NAME" = "v$core" || {
+            echo "tag $GITHUB_REF_NAME does not match version $core"
+            exit 1
+          }
+
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
+            echo "release tag is not on main"
+            exit 1
+          }
+
+      - name: sync
+        run: uv sync --locked --all-packages
+
+      - name: check
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+          uv run pyright
+          uv run pytest
+          uv run python -m compileall -q packages examples scripts
+
+      - name: build
+        run: |
+          uv build --no-sources --package hyle-core --out-dir dist
+          uv build --no-sources --package hyle-ollama --out-dir dist
+
+      - name: verify
+        run: >-
+          uv run python scripts/verify_distributions.py
+          --package hyle-core
+          --package hyle-ollama
+          dist/*
+
+      - name: wheel
+        run: |
+          uv venv /tmp/hyle-wheel --python 3.14
+          uv pip install --python /tmp/hyle-wheel/bin/python dist/*.whl
+          /tmp/hyle-wheel/bin/python scripts/smoke_imports.py
+
+      - name: sdist
+        run: |
+          uv venv /tmp/hyle-sdist --python 3.14
+          uv pip install --python /tmp/hyle-sdist/bin/python dist/*.tar.gz
+          /tmp/hyle-sdist/bin/python scripts/smoke_imports.py
+
+      - name: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: pypi
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: download
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+
+      - name: publish
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

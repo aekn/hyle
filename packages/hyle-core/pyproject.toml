@@ -1,0 +1,36 @@
+[project]
+name = "hyle-core"
+version = "0.1.0a1"
+description = "Typed, provider-independent primitives for working with AI models."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+import-names = ["hyle"]
+dependencies = [
+    "pydantic>=2.13.4",
+    "typing-extensions>=4.16.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Source = "https://github.com/aekn/hyle"
+Documentation = "https://aekn.github.io/hyle/"
+Issues = "https://github.com/aekn/hyle/issues"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "hyle"
+module-root = ""
+source-include = ["tests/**"]

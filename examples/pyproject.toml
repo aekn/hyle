@@ -1,0 +1,20 @@
+[project]
+name = "hyle-examples"
+version = "0.0.0"
+description = "Executable examples for Hyle."
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic>=2.13.4",
+    "hyle-core==0.1.0a1",
+    "hyle-ollama==0.1.0a1",
+]
+classifiers = [
+    "Private :: Do Not Upload",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+hyle-core = { workspace = true }
+hyle-ollama = { workspace = true }

@@ -1,0 +1,145 @@
+[project]
+name = "hyle-workspace"
+version = "0.0.0"
+description = "Development workspace for Hyle and its integrations."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "hyle-core==0.1.0a1",
+    "hyle-ollama==0.1.0a1",
+]
+classifiers = [
+    "Private :: Do Not Upload",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.164.0",
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "pytest-socket>=0.8.1",
+    "ruff>=0.16.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+    "examples",
+]
+
+[tool.uv.sources]
+hyle-core = { workspace = true }
+hyle-ollama = { workspace = true }
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+    "--strict-config",
+    "--strict-markers",
+    "--disable-socket",
+    "--allow-unix-socket",
+    "-ra",
+]
+asyncio_mode = "strict"
+testpaths = [
+    "tests",
+    "packages/hyle-core/tests",
+    "packages/hyle-ollama/tests",
+]
+markers = [
+    "integration: opt-in tests that talk to a real provider service",
+]
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+source = [
+    "hyle",
+    "hyle_ollama",
+]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+preview = false
+src = [
+    "examples",
+    "packages/hyle-core",
+    "packages/hyle-ollama",
+]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ASYNC100",
+    "ASYNC110",
+    "ASYNC210",
+    "ASYNC212",
+    "ASYNC220",
+    "ASYNC221",
+    "ASYNC222",
+    "ASYNC230",
+    "ASYNC240",
+    "ASYNC250",
+    "ASYNC251",
+    "B",
+    "C4",
+    "E4",
+    "E7",
+    "E9",
+    "E501",
+    "ERA",
+    "F",
+    "I",
+    "PERF",
+    "PGH",
+    "PIE",
+    "RUF",
+    "T10",
+    "TID252",
+    "UP",
+]
+ignore = ["C416"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 130
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.per-file-ignores]
+"packages/hyle-core/hyle/embeddings/_result.py" = ["A002"]
+"packages/hyle-core/hyle/generation/_request.py" = ["A002"]
+"packages/hyle-core/tests/test_content.py" = ["RUF001"]
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+reportImportCycles = "error"
+reportMatchNotExhaustive = "error"
+reportUnnecessaryCast = "error"
+reportUnnecessaryIsInstance = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+
+[[tool.pyright.executionEnvironments]]
+root = "."
+extraPaths = [
+    "examples",
+    "packages/hyle-core",
+    "packages/hyle-ollama",
+]
