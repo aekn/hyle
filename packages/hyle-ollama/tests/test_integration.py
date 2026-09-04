@@ -3,7 +3,7 @@ import os
 import pytest
 
 from hyle import Request
-from hyle_ollama import OllamaClient, OllamaEmbedder, OllamaModel
+from hyle_ollama import OllamaClient, OllamaEmbedder, OllamaGenerationConfig, OllamaModel
 
 pytestmark = pytest.mark.integration
 _LIVE = os.getenv("HYLE_OLLAMA_INTEGRATION") == "1"
@@ -18,7 +18,12 @@ async def test_live_generation_streaming_and_embeddings() -> None:
     embedding_name = os.getenv("HYLE_OLLAMA_EMBEDDING_MODEL", "embeddinggemma")
 
     async with OllamaClient(host) as client:
-        model = OllamaModel(model_name, client=client)
+        model = OllamaModel(
+            model_name,
+            client=client,
+            config=OllamaGenerationConfig(think=False),
+        )
+
         response = await model.generate(Request("Reply with exactly: ok", max_output_tokens=16))
         assert response.text
 
@@ -27,6 +32,9 @@ async def test_live_generation_streaming_and_embeddings() -> None:
             _ = [part async for part in stream]
             assert stream.response().text
 
-        embeddings = await OllamaEmbedder(embedding_name, client=client).embed("hello", "world")
+        embeddings = await OllamaEmbedder(
+            embedding_name,
+            client=client,
+        ).embed("hello", "world")
         assert len(embeddings) == 2
         assert embeddings.dimensions > 0
